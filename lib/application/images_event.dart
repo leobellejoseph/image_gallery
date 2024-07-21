@@ -1,7 +1,10 @@
 part of 'images_bloc.dart';
 
-@freezed
-class ImagesEvent with _$ImagesEvent {
-  const factory ImagesEvent.initialize() = _Initialize;
-  const factory ImagesEvent.fetchImages() = _FetchImages;
+abstract class ImagesEvent {}
+
+class InitialImagesEvent extends ImagesEvent {}
+
+class FetchImagesEvent extends ImagesEvent {
+  final int pageSize;
+  FetchImagesEvent({int? size}) : pageSize = size ?? 10;
 }
