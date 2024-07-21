@@ -21,7 +21,7 @@ class MainApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       home: BlocProvider(
         create: (context) =>
-            ImagesBloc(repository: repository)..add(FetchImagesEvent()),
+            ImagesBloc(repository: repository)..add(InitialImagesEvent()),
         child: const HomeScreen(),
       ),
     );

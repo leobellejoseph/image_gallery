@@ -13,10 +13,12 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   late final TextEditingController controller;
+  final _scrollController = ScrollController();
   final RegExp numberRegExp = RegExp(r'^\d+$');
   @override
   void initState() {
     controller = TextEditingController();
+    _scrollController.addListener(_onScroll);
     super.initState();
   }
 
@@ -91,11 +93,15 @@ class _HomeScreenState extends State<HomeScreen> {
             },
             child: BlocBuilder<ImagesBloc, ImagesState>(
               builder: (context, state) {
-                if (state.status == EventStatus.fetching) {
-                  return const Center(child: CircularProgressIndicator());
+                if (state.images.isEmpty) {
+                  return const Center(
+                    child: Text('No Data'),
+                  );
                 }
+
                 final list = state.images;
                 return ListView.separated(
+                  controller: _scrollController,
                   itemCount: list.length,
                   itemBuilder: (context, index) =>
                       _itemBuilder(image: list[index], index: index + 1),
@@ -150,5 +156,27 @@ class _HomeScreenState extends State<HomeScreen> {
       thickness: 0.5,
       color: Colors.black54,
     );
+  }
+
+  @override
+  void dispose() {
+    _scrollController
+      ..removeListener(_onScroll)
+      ..dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    final length = context.read<ImagesBloc>().state.images.length;
+    if (_isBottom) {
+      context.read<ImagesBloc>().add(FetchImagesEvent(size: length + 10));
+    }
+  }
+
+  bool get _isBottom {
+    if (!_scrollController.hasClients) return false;
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    final currentScroll = _scrollController.offset;
+    return currentScroll >= (maxScroll * 0.9);
   }
 }

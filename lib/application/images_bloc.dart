@@ -18,14 +18,22 @@ class ImagesBloc extends Bloc<ImagesEvent, ImagesState> {
   Future<void> _initialize(
       InitialImagesEvent event, Emitter<ImagesState> emit) async {
     emit(state.copyWith(status: EventStatus.fetching));
-    final imageList = await _repository.fetchImages();
+    final imageList =
+        await _repository.fetchImages(startIndex: 0, pageSize: 10);
     emit(state.copyWith(images: imageList, status: EventStatus.fetched));
   }
 
   Future<void> _fetchImages(
       FetchImagesEvent event, Emitter<ImagesState> emit) async {
+    if (state.hasReachedMaxPage) return;
+
     emit(state.copyWith(status: EventStatus.fetching));
-    final imageList = await _repository.fetchImages(pageSize: event.pageSize);
+    final imageList = await _repository.fetchImages(
+        startIndex: event.startIndex, pageSize: event.pageSize);
+    if (imageList.isEmpty) {
+      emit(
+          state.copyWith(hasReachedMaxPage: true, status: EventStatus.fetched));
+    }
     emit(state.copyWith(images: imageList, status: EventStatus.fetched));
   }
 }
