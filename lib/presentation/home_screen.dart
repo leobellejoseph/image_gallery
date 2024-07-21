@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_gallery/application/images_bloc.dart';
@@ -11,44 +12,136 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  late final TextEditingController controller;
+  final RegExp numberRegExp = RegExp(r'^\d+$');
+  @override
+  void initState() {
+    controller = TextEditingController();
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(
-            Icons.get_app,
-            color: Colors.blueAccent,
+    return GestureDetector(
+      onTap: () => FocusNode().unfocus,
+      child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: Colors.blue,
+          title: TextFormField(
+            controller: controller,
+            onFieldSubmitted: (value) {
+              if (numberRegExp.hasMatch(value)) {
+                context
+                    .read<ImagesBloc>()
+                    .add(FetchImagesEvent(size: int.tryParse(value) ?? 0));
+              }
+              controller.clear();
+            },
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter a number';
+              }
+
+              if (!numberRegExp.hasMatch(value)) {
+                return 'Please enter a valid number';
+              }
+              return null;
+            },
+            cursorColor: Colors.black,
+            enableSuggestions: false,
+            autocorrect: false,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(
+              fillColor: Colors.white,
+              labelText: 'Enter Page Size',
+              contentPadding: const EdgeInsets.all(4),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(
+                  color: Colors.white,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(
+                  color: Colors.black,
+                  width: 1,
+                ),
+              ),
+              border: OutlineInputBorder(
+                borderSide: const BorderSide(
+                  width: 0.5,
+                ),
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
           ),
-          onPressed: () {
-            context.read<ImagesBloc>().add(FetchImagesEvent());
-          },
         ),
-      ),
-      body: DecoratedBox(
-        decoration: const BoxDecoration(
-          color: Colors.lightBlue,
-        ),
-        child: BlocBuilder<ImagesBloc, ImagesState>(
-          builder: (context, state) {
-            print('STATUS:${state.status}');
-            if (state.status == EventStatus.fetching) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            final list = state.images;
-            return ListView.separated(
-              itemCount: list.length,
-              itemBuilder: (context, index) => _itemBuilder(image: list[index]),
-              separatorBuilder: (context, index) => _separatorBuilder(),
-            );
-          },
+        body: DecoratedBox(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+          ),
+          child: RefreshIndicator(
+            onRefresh: () async {
+              await Future.delayed(const Duration(seconds: 1));
+              if (mounted) {
+                context.read<ImagesBloc>().add(FetchImagesEvent());
+                FocusNode().unfocus();
+              }
+            },
+            child: BlocBuilder<ImagesBloc, ImagesState>(
+              builder: (context, state) {
+                if (state.status == EventStatus.fetching) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                final list = state.images;
+                return ListView.separated(
+                  itemCount: list.length,
+                  itemBuilder: (context, index) =>
+                      _itemBuilder(image: list[index], index: index + 1),
+                  separatorBuilder: (context, index) => _separatorBuilder(),
+                );
+              },
+            ),
+          ),
         ),
       ),
     );
   }
 
-  Widget _itemBuilder({required ImageObject image}) {
-    return const ListTile();
+  Widget _itemBuilder({required ImageObject image, required int index}) {
+    return ListTile(
+      title: Stack(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: CachedNetworkImage(
+              imageUrl: image.downloadUrl,
+              placeholder: (context, url) => const SizedBox(
+                width: 100,
+                height: 100,
+                child: CircularProgressIndicator.adaptive(),
+              ),
+              errorWidget: (context, url, error) => const Icon(Icons.error),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Align(
+              alignment: Alignment.topLeft,
+              child: Text(
+                index.toString(),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+      subtitle: Text(image.author),
+    );
   }
 
   Widget _separatorBuilder() {

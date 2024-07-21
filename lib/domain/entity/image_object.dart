@@ -3,8 +3,8 @@ import 'package:image_gallery/domain/dto/image_info_dto.dart';
 class ImageObject {
   final String id;
   final String author;
-  final double width;
-  final double height;
+  final int width;
+  final int height;
   final String url;
   final String downloadUrl;
   const ImageObject({
@@ -23,7 +23,7 @@ class ImageObject {
       width: imageInfoDto.width,
       height: imageInfoDto.height,
       url: imageInfoDto.url,
-      downloadUrl: imageInfoDto.download_url,
+      downloadUrl: imageInfoDto.downloadUrl,
     );
   }
 }

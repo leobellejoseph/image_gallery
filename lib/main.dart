@@ -20,7 +20,8 @@ class MainApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: BlocProvider(
-        create: (context) => ImagesBloc(repository: repository),
+        create: (context) =>
+            ImagesBloc(repository: repository)..add(FetchImagesEvent()),
         child: const HomeScreen(),
       ),
     );
