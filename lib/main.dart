@@ -1,12 +1,14 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:image_gallery/application/images_bloc.dart';
 import 'package:image_gallery/domain/repository/repository.dart';
 import 'package:image_gallery/presentation/home_screen.dart';
 
-void main() {
+void main() async {
   final repository = ImagesRepository(dio: Dio());
+  await Hive.initFlutter();
   runApp(MainApp(repository: repository));
 }
 

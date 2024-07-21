@@ -13,6 +13,7 @@ class ImagesBloc extends Bloc<ImagesEvent, ImagesState> {
         super(ImagesState.initial()) {
     on<InitialImagesEvent>(_initialize);
     on<FetchImagesEvent>(_fetchImages);
+    on<SaveImagesEvent>(_saveImage);
   }
 
   Future<void> _initialize(
@@ -35,5 +36,14 @@ class ImagesBloc extends Bloc<ImagesEvent, ImagesState> {
           state.copyWith(hasReachedMaxPage: true, status: EventStatus.fetched));
     }
     emit(state.copyWith(images: imageList, status: EventStatus.fetched));
+  }
+
+  Future<void> _saveImage(
+      SaveImagesEvent event, Emitter<ImagesState> emit) async {
+    if (state.hasReachedMaxPage) return;
+
+    emit(state.copyWith(status: EventStatus.fetching));
+    await _repository.saveOfflineImageObject(image: event.image);
+    emit(state.copyWith(status: EventStatus.fetched));
   }
 }

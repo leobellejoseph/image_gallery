@@ -144,6 +144,19 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
+          Align(
+            alignment: Alignment.bottomRight,
+            child: IconButton(
+              splashColor: Colors.white,
+              onPressed: () {
+                context.read<ImagesBloc>().add(SaveImagesEvent(image: image));
+              },
+              icon: const Icon(
+                Icons.download,
+                color: Colors.blue,
+              ),
+            ),
+          ),
         ],
       ),
       subtitle: Text(image.author),

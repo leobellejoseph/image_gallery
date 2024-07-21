@@ -11,3 +11,8 @@ class FetchImagesEvent extends ImagesEvent {
       : startIndex = startIndex ?? 1,
         pageSize = size ?? 10;
 }
+
+class SaveImagesEvent extends ImagesEvent {
+  final ImageObject image;
+  SaveImagesEvent({required this.image});
+}
