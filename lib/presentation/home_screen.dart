@@ -3,10 +3,8 @@ import 'dart:convert';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 import 'package:image_gallery/application/images_bloc.dart';
 import 'package:image_gallery/domain/entity/image_info_object.dart';
-import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -33,15 +31,6 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Scaffold(
         appBar: AppBar(
           backgroundColor: Colors.blue,
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.clear),
-              onPressed: () async {
-                final box = await Hive.openBox('ImageGallery');
-                box.clear();
-              },
-            ),
-          ],
           title: TextFormField(
             controller: controller,
             onFieldSubmitted: (value) {
@@ -49,17 +38,29 @@ class _HomeScreenState extends State<HomeScreen> {
                 context
                     .read<ImagesBloc>()
                     .add(FetchImagesEvent(size: int.tryParse(value) ?? 0));
+              } else {
+                if (value.isNotEmpty) {
+                  final banner = MaterialBanner(
+                    content: const Text('Invalid Value. Please try again',
+                        style: TextStyle(color: Colors.red)),
+                    actions: [
+                      OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: Colors.blue)),
+                          onPressed: () {
+                            ScaffoldMessenger.of(context)
+                                .hideCurrentMaterialBanner();
+                            controller.clear();
+                          },
+                          child: const Text('Close',
+                              style: TextStyle(color: Colors.blue)))
+                    ],
+                  );
+                  ScaffoldMessenger.of(context).showMaterialBanner(banner);
+                } else {
+                  context.read<ImagesBloc>().add(InitialImagesEvent());
+                }
               }
-            },
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please enter a number';
-              }
-
-              if (!numberRegExp.hasMatch(value)) {
-                return 'Please enter a valid number';
-              }
-              return null;
             },
             cursorColor: Colors.black,
             enableSuggestions: false,
