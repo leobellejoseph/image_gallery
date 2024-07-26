@@ -39,10 +39,10 @@ class ImagesRepository {
       {int startIndex = 1, int pageSize = 10}) async {
     final box = await Hive.openBox(ValueObjects.IMAGE_GALLERY);
     if (box.isNotEmpty) {
-      final data =
-          box.values.map((item) => ImageInfoDto.fromJson(item)).toList();
-
-      return data.map((item) {
+      final list = box.values
+          .map((item) => ImageInfoDto.fromJson(jsonDecode(item)))
+          .toList();
+      return list.map((item) {
         return ImageInfoObject.toDomain(
             imageInfoDto: item, isSavedOffline: true);
       }).toList();

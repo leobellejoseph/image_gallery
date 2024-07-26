@@ -164,9 +164,13 @@ class _HomeScreenState extends State<HomeScreen> {
             alignment: Alignment.bottomRight,
             child: IconButton(
               splashColor: Colors.white,
-              onPressed: () {
-                context.read<ImagesBloc>().add(SaveImagesEvent(image: image));
-              },
+              onPressed: image.isSavedOffline
+                  ? null
+                  : () {
+                      context
+                          .read<ImagesBloc>()
+                          .add(SaveImagesEvent(image: image));
+                    },
               icon: image.isSavedOffline
                   ? const Icon(
                       Icons.check,
@@ -202,8 +206,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _onScroll() async {
     final length = context.read<ImagesBloc>().state.images.length;
-    final hasInternet = await InternetConnection().hasInternetAccess;
-    if (_isBottom && controller.value.text.isEmpty && hasInternet) {
+    if (_isBottom && controller.value.text.isEmpty) {
       context.read<ImagesBloc>().add(FetchImagesEvent(size: length + 10));
     }
   }

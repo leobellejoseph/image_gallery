@@ -23,6 +23,6 @@ class ImageInfoDto {
         height: json['height'] as int,
         url: json['url'],
         downloadUrl: json['download_url'],
-        imageString: '',
+        imageString: json['imageString'] ?? '',
       );
 }

@@ -8,7 +8,8 @@ part 'images_state.dart';
 class ImagesBloc extends Bloc<ImagesEvent, ImagesState> {
   final ImagesRepository repository;
   final bool hasInternet;
-  ImagesBloc({required this.repository,required this.hasInternet}) : super(ImagesState.initial()) {
+  ImagesBloc({required this.repository, required this.hasInternet})
+      : super(ImagesState.initial()) {
     on<InitialImagesEvent>(_initialize);
     on<FetchImagesEvent>(_fetchImages);
     on<SaveImagesEvent>(_saveImage);
@@ -30,16 +31,14 @@ class ImagesBloc extends Bloc<ImagesEvent, ImagesState> {
 
   Future<void> _fetchImages(
       FetchImagesEvent event, Emitter<ImagesState> emit) async {
-    if (state.hasReachedMaxPage) return;
+    if (state.hasReachedMaxPage || !hasInternet) return;
+
     emit(state.copyWith(status: EventStatus.fetching));
+
     List<ImageInfoObject> imageList = [];
-    if (hasInternet) {
-      imageList = await repository.fetchImagesRemote(
-          startIndex: event.startIndex, pageSize: event.pageSize);
-    } else {
-      imageList = await repository.fetchImagesLocal(
-          startIndex: event.startIndex, pageSize: event.pageSize);
-    }
+
+    imageList = await repository.fetchImagesRemote(
+        startIndex: event.startIndex, pageSize: event.pageSize);
 
     if (imageList.isEmpty) {
       emit(
