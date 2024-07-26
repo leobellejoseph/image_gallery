@@ -143,6 +143,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   )
                 : CachedNetworkImage(
                     imageUrl: image.downloadUrl,
+                    errorWidget: (context, value, obj) =>
+                        const Image(image: AssetImage('assets/no_image.png')),
                     placeholder: (context, value) => const Center(
                       child: CircularProgressIndicator.adaptive(),
                     ),
