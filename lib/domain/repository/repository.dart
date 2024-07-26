@@ -1,49 +1,66 @@
+import 'dart:convert';
+
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:image_gallery/constants.dart';
 import 'package:image_gallery/domain/dto/image_info_dto.dart';
-import 'package:image_gallery/domain/entity/image_object.dart';
+import 'package:image_gallery/domain/entity/image_info_object.dart';
 import 'package:dio/dio.dart';
+import 'package:http/http.dart' as http;
 
 class ImagesRepository {
-  final Dio _dio;
-  ImagesRepository({Dio? dio}) : _dio = dio ?? Dio();
+  final Dio dio;
 
-  Future<List<ImageObject>> fetchImages(
+  ImagesRepository({required this.dio});
+
+  Future<List<ImageInfoObject>> fetchImagesRemote(
       {int startIndex = 1, int pageSize = 10}) async {
     final query = {'page': startIndex, 'limit': pageSize};
     final response =
-        await _dio.get('https://picsum.photos/v2/list', queryParameters: query);
+        await dio.get(ValueObjects.IMAGE_GALLERY_URL, queryParameters: query);
     if (response.statusCode == 200) {
       final data = (response.data as List)
           .map((item) => ImageInfoDto.fromJson(item))
           .toList();
-
+      final box = await Hive.openBox(ValueObjects.IMAGE_GALLERY);
       return data
-          .map((item) => ImageObject.toDomain(imageInfoDto: item))
+          .map(
+            (item) => ImageInfoObject.toDomain(
+              imageInfoDto: item,
+              isSavedOffline: box.isNotEmpty && box.containsKey(item.id),
+            ),
+          )
           .toList();
     }
-    return <ImageObject>[];
+
+    return <ImageInfoObject>[];
   }
 
-  Future<List<ImageObject>> fetchOfflineImages(
+  Future<List<ImageInfoObject>> fetchImagesLocal(
       {int startIndex = 1, int pageSize = 10}) async {
-    final box = await Hive.openBox('ImageGallery');
-    if (box.isOpen) {
-      final list =
-          box.toMap().entries.map((item) => item as ImageObject).toList();
-      if (list.isNotEmpty) {
-        return list;
-      }
-      box.close();
+    final box = await Hive.openBox(ValueObjects.IMAGE_GALLERY);
+    if (box.isNotEmpty) {
+      final data =
+          box.values.map((item) => ImageInfoDto.fromJson(item)).toList();
+
+      return data.map((item) {
+        return ImageInfoObject.toDomain(
+            imageInfoDto: item, isSavedOffline: true);
+      }).toList();
     }
-    return <ImageObject>[];
+
+    return <ImageInfoObject>[];
   }
 
-  Future<void> saveOfflineImageObject({required ImageObject image}) async {
-    final box = await Hive.openBox('ImageGallery');
-    if (box.isOpen) {
-      box.put(image.id, image);
-      print('Saved:${box.toMap().entries.length}');
-      box.close();
+  Future<String> saveOfflineImageObject(
+      {required ImageInfoObject image}) async {
+    final box = await Hive.openBox(ValueObjects.IMAGE_GALLERY);
+    final response = await http.get(Uri.parse(image.downloadUrl));
+    final base64 = base64Encode(response.bodyBytes);
+    final data = image.copyWith(imageString: base64).toJson();
+    final json = jsonEncode(data);
+    if (box.isOpen && !box.containsKey(image.id)) {
+      box.put(image.id, json);
     }
+    return base64;
   }
 }

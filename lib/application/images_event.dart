@@ -13,6 +13,6 @@ class FetchImagesEvent extends ImagesEvent {
 }
 
 class SaveImagesEvent extends ImagesEvent {
-  final ImageObject image;
+  final ImageInfoObject image;
   SaveImagesEvent({required this.image});
 }

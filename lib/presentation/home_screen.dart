@@ -1,8 +1,12 @@
+import 'dart:convert';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:image_gallery/application/images_bloc.dart';
-import 'package:image_gallery/domain/entity/image_object.dart';
+import 'package:image_gallery/domain/entity/image_info_object.dart';
+import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -29,6 +33,15 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Scaffold(
         appBar: AppBar(
           backgroundColor: Colors.blue,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.clear),
+              onPressed: () async {
+                final box = await Hive.openBox('ImageGallery');
+                box.clear();
+              },
+            ),
+          ],
           title: TextFormField(
             controller: controller,
             onFieldSubmitted: (value) {
@@ -37,7 +50,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     .read<ImagesBloc>()
                     .add(FetchImagesEvent(size: int.tryParse(value) ?? 0));
               }
-              controller.clear();
             },
             validator: (value) {
               if (value == null || value.isEmpty) {
@@ -55,7 +67,8 @@ class _HomeScreenState extends State<HomeScreen> {
             keyboardType: TextInputType.number,
             decoration: InputDecoration(
               fillColor: Colors.white,
-              labelText: 'Enter Page Size',
+              filled: true,
+              hintText: 'Enter Page Size',
               contentPadding: const EdgeInsets.all(4),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
@@ -115,21 +128,24 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _itemBuilder({required ImageObject image, required int index}) {
+  Widget _itemBuilder({required ImageInfoObject image, required int index}) {
     return ListTile(
       title: Stack(
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
-            child: CachedNetworkImage(
-              imageUrl: image.downloadUrl,
-              placeholder: (context, url) => const SizedBox(
-                width: 100,
-                height: 100,
-                child: CircularProgressIndicator.adaptive(),
-              ),
-              errorWidget: (context, url, error) => const Icon(Icons.error),
-            ),
+            child: image.isSavedOffline && image.imageString.isNotEmpty
+                ? Image(
+                    image: MemoryImage(
+                      base64Decode(image.imageString),
+                    ),
+                  )
+                : CachedNetworkImage(
+                    imageUrl: image.downloadUrl,
+                    placeholder: (context, value) => const Center(
+                      child: CircularProgressIndicator.adaptive(),
+                    ),
+                  ),
           ),
           Padding(
             padding: const EdgeInsets.all(8.0),
@@ -151,15 +167,19 @@ class _HomeScreenState extends State<HomeScreen> {
               onPressed: () {
                 context.read<ImagesBloc>().add(SaveImagesEvent(image: image));
               },
-              icon: const Icon(
-                Icons.download,
-                color: Colors.blue,
-              ),
+              icon: image.isSavedOffline
+                  ? const Icon(
+                      Icons.check,
+                      color: Colors.green,
+                    )
+                  : const Icon(
+                      Icons.download,
+                      color: Colors.white,
+                    ),
             ),
           ),
         ],
       ),
-      subtitle: Text(image.author),
     );
   }
 
@@ -173,15 +193,17 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
+    controller.dispose();
     _scrollController
       ..removeListener(_onScroll)
       ..dispose();
     super.dispose();
   }
 
-  void _onScroll() {
+  void _onScroll() async {
     final length = context.read<ImagesBloc>().state.images.length;
-    if (_isBottom) {
+    final hasInternet = await InternetConnection().hasInternetAccess;
+    if (_isBottom && controller.value.text.isEmpty && hasInternet) {
       context.read<ImagesBloc>().add(FetchImagesEvent(size: length + 10));
     }
   }

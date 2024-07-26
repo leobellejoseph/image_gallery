@@ -5,6 +5,7 @@ class ImageInfoDto {
   final int height;
   final String url;
   final String downloadUrl;
+  final String imageString;
   const ImageInfoDto({
     required this.id,
     required this.author,
@@ -12,7 +13,9 @@ class ImageInfoDto {
     required this.height,
     required this.url,
     required this.downloadUrl,
+    required this.imageString,
   });
+
   factory ImageInfoDto.fromJson(Map<String, dynamic> json) => ImageInfoDto(
         id: json['id'],
         author: json['author'],
@@ -20,5 +23,6 @@ class ImageInfoDto {
         height: json['height'] as int,
         url: json['url'],
         downloadUrl: json['download_url'],
+        imageString: '',
       );
 }

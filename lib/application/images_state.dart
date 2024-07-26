@@ -7,7 +7,7 @@ enum EventStatus {
 }
 
 class ImagesState {
-  final List<ImageObject> images;
+  final List<ImageInfoObject> images;
   final EventStatus status;
   final bool hasReachedMaxPage;
   const ImagesState({
@@ -22,7 +22,7 @@ class ImagesState {
       );
 
   ImagesState copyWith({
-    List<ImageObject>? images,
+    List<ImageInfoObject>? images,
     EventStatus? status,
     bool? hasReachedMaxPage,
   }) =>
