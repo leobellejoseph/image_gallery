@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_gallery/application/images_bloc.dart';
 import 'package:image_gallery/domain/entity/image_info_object.dart';
+import 'package:lottie/lottie.dart';
 
 class HomeScreen extends StatefulWidget {
   final bool hasInternet;
@@ -15,111 +16,113 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  late final TextEditingController controller;
+  late final TextEditingController _controller;
   final _scrollController = ScrollController();
-  final RegExp numberRegExp = RegExp(r'^\d+$');
+  final RegExp _numberRegExp = RegExp(r'^\d+$');
+  final FocusNode _focusNode = FocusNode();
   @override
   void initState() {
-    controller = TextEditingController();
+    _controller = TextEditingController();
     _scrollController.addListener(_onScroll);
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => FocusNode().unfocus,
-      child: Scaffold(
-        appBar: AppBar(
-          backgroundColor: Colors.blue,
-          title: TextFormField(
-            readOnly: !widget.hasInternet,
-            controller: controller,
-            onFieldSubmitted: (value) {
-              if (numberRegExp.hasMatch(value)) {
-                context.read<ImagesBloc>().add(FetchImagesEvent(size: int.tryParse(value) ?? 0));
-              } else {
-                if (value.isNotEmpty) {
-                  final banner = MaterialBanner(
-                    content: const Text('Invalid Value. Please try again', style: TextStyle(color: Colors.red)),
-                    actions: [
-                      OutlinedButton(
-                          style: OutlinedButton.styleFrom(side: const BorderSide(color: Colors.blue)),
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).hideCurrentMaterialBanner();
-                            controller.clear();
-                          },
-                          child: const Text('Close', style: TextStyle(color: Colors.blue)))
-                    ],
-                  );
-                  ScaffoldMessenger.of(context).showMaterialBanner(banner);
-                } else {
-                  context.read<ImagesBloc>().add(InitialImagesEvent());
-                }
-              }
-            },
-            cursorColor: Colors.black,
-            enableSuggestions: false,
-            autocorrect: false,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(
-              fillColor: Colors.white,
-              filled: true,
-              hintText: 'Enter Page Size',
-              contentPadding: const EdgeInsets.symmetric(
-                vertical: 4,
-                horizontal: 10,
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(
-                  color: Colors.white,
+    return SafeArea(
+      top: false,
+      bottom: true,
+      child: GestureDetector(
+        onTap: () => FocusNode().unfocus,
+        child: Scaffold(
+          appBar: AppBar(
+            elevation: 0,
+            surfaceTintColor: Colors.white,
+            backgroundColor: Colors.white,
+            title: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: TextFormField(
+                readOnly: !widget.hasInternet,
+                controller: _controller,
+                focusNode: _focusNode,
+                onFieldSubmitted: (value) {
+                  if (_numberRegExp.hasMatch(value)) {
+                    context.read<ImagesBloc>().add(FetchImagesEvent(size: int.tryParse(value) ?? 0));
+                  } else {
+                    if (value.isNotEmpty) {
+                      _showBannerNotification(message: 'Invalid Value. Please try again');
+                    } else {
+                      context.read<ImagesBloc>().add(InitialImagesEvent());
+                    }
+                  }
+                },
+                cursorColor: Colors.black,
+                enableSuggestions: false,
+                autocorrect: false,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  fillColor: Colors.white,
+                  filled: true,
+                  hintText: 'Enter Page Size',
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: 4,
+                    horizontal: 10,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(
+                      color: Colors.blueAccent,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(
+                      color: Colors.green,
+                      width: 2,
+                    ),
+                  ),
+                  border: OutlineInputBorder(
+                    borderSide: const BorderSide(
+                      width: 0.5,
+                    ),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(
-                  color: Colors.black,
-                  width: 1,
-                ),
-              ),
-              border: OutlineInputBorder(
-                borderSide: const BorderSide(
-                  width: 0.5,
-                ),
-                borderRadius: BorderRadius.circular(10),
               ),
             ),
           ),
-        ),
-        body: DecoratedBox(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-          ),
-          child: RefreshIndicator(
-            onRefresh: () async {
-              await Future.delayed(const Duration(seconds: 1));
-              if (mounted) {
-                context.read<ImagesBloc>().add(FetchImagesEvent());
-                FocusNode().unfocus();
-              }
-            },
-            child: BlocBuilder<ImagesBloc, ImagesState>(
-              builder: (context, state) {
-                if (state.images.isEmpty) {
-                  return const Center(
-                    child: Text('No Data'),
-                  );
+          body: DecoratedBox(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+            ),
+            child: RefreshIndicator(
+              onRefresh: () async {
+                _focusNode.unfocus();
+                await Future.delayed(const Duration(seconds: 1));
+                if (mounted) {
+                  context.read<ImagesBloc>().add(FetchImagesEvent());
                 }
-
-                final list = state.images;
-                return ListView.separated(
-                  controller: _scrollController,
-                  itemCount: list.length,
-                  itemBuilder: (context, index) => _itemBuilder(image: list[index], index: index + 1),
-                  separatorBuilder: (context, index) => _separatorBuilder(),
-                );
               },
+              child: BlocBuilder<ImagesBloc, ImagesState>(
+                builder: (context, state) {
+                  if (state.images.isEmpty) {
+                    return Center(
+                      child: Lottie.asset(
+                        'assets/loading_splash.json',
+                        repeat: true,
+                      ),
+                    );
+                  }
+
+                  final list = state.images;
+                  return ListView.separated(
+                    controller: _scrollController,
+                    itemCount: list.length,
+                    itemBuilder: (context, index) => _itemBuilder(image: list[index], index: index + 1),
+                    separatorBuilder: (context, index) => _separatorBuilder(),
+                  );
+                },
+              ),
             ),
           ),
         ),
@@ -129,58 +132,79 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _itemBuilder({required ImageInfoObject image, required int index}) {
     return ListTile(
-      title: Stack(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: image.isSavedOffline && image.imageString.isNotEmpty
-                ? Image(
-                    image: MemoryImage(
-                      base64Decode(image.imageString),
+      title: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Stack(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: image.isSavedOffline && image.imageString.isNotEmpty
+                  ? Image(
+                      image: MemoryImage(
+                        base64Decode(image.imageString),
+                      ),
+                    )
+                  : CachedNetworkImage(
+                      imageUrl: image.downloadUrl,
+                      errorWidget: (context, value, obj) =>
+                          const Center(child: Image(image: AssetImage('assets/no_image.png'))),
+                      placeholder: (context, value) => Center(
+                        child: Lottie.asset('assets/loading.json'),
+                      ),
                     ),
-                  )
-                : CachedNetworkImage(
-                    imageUrl: image.downloadUrl,
-                    errorWidget: (context, value, obj) => const Image(image: AssetImage('assets/no_image.png')),
-                    placeholder: (context, value) => const Center(
-                      child: CircularProgressIndicator.adaptive(),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Align(
+                alignment: Alignment.topLeft,
+                child: Opacity(
+                  opacity: 0.7,
+                  child: CircleAvatar(
+                    backgroundColor: Colors.white,
+                    child: Text(
+                      index.toString(),
+                      style: const TextStyle(
+                        color: Colors.blue,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Align(
-              alignment: Alignment.topLeft,
-              child: Text(
-                index.toString(),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
                 ),
               ),
             ),
-          ),
-          Align(
-            alignment: Alignment.bottomRight,
-            child: IconButton(
-              splashColor: Colors.white,
-              onPressed: image.isSavedOffline
-                  ? null
-                  : () {
-                      context.read<ImagesBloc>().add(SaveImagesEvent(image: image));
-                    },
-              icon: image.isSavedOffline
-                  ? const Icon(
-                      Icons.check,
-                      color: Colors.green,
-                    )
-                  : const Icon(
-                      Icons.download,
-                      color: Colors.white,
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Align(
+                alignment: Alignment.bottomRight,
+                child: Opacity(
+                  opacity: 0.7,
+                  child: CircleAvatar(
+                    backgroundColor: Colors.white,
+                    child: IconButton(
+                      splashColor: Colors.blueAccent,
+                      onPressed: image.isSavedOffline
+                          ? null
+                          : () {
+                              context.read<ImagesBloc>().add(SaveImagesEvent(image: image));
+                              _showBannerNotification(
+                                  message: 'Image[]${image.id}] Saved Successfully.', isWarning: false);
+                            },
+                      icon: image.isSavedOffline
+                          ? const Icon(
+                              Icons.check,
+                              color: Colors.green,
+                            )
+                          : const Icon(
+                              Icons.download,
+                              color: Colors.blueAccent,
+                            ),
                     ),
+                  ),
+                ),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -193,9 +217,26 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  void _showBannerNotification({required String message, bool isWarning = true}) {
+    final banner = MaterialBanner(
+      content: Text(message, style: TextStyle(color: isWarning ? Colors.red : Colors.green)),
+      actions: [
+        OutlinedButton(
+            style: OutlinedButton.styleFrom(side: const BorderSide(color: Colors.blue)),
+            onPressed: () {
+              ScaffoldMessenger.of(context).hideCurrentMaterialBanner();
+              _controller.clear();
+            },
+            child: const Text('Close', style: TextStyle(color: Colors.blue)))
+      ],
+    );
+    ScaffoldMessenger.of(context).showMaterialBanner(banner);
+  }
+
   @override
   void dispose() {
-    controller.dispose();
+    _controller.dispose();
+    _focusNode.dispose();
     _scrollController
       ..removeListener(_onScroll)
       ..dispose();
@@ -204,7 +245,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _onScroll() async {
     final length = context.read<ImagesBloc>().state.images.length;
-    if (_isBottom && controller.value.text.isEmpty) {
+    if (_isBottom && _controller.value.text.isEmpty) {
       context.read<ImagesBloc>().add(FetchImagesEvent(size: length + 10));
     }
   }
