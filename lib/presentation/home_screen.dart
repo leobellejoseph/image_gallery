@@ -29,80 +29,80 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      top: false,
-      bottom: true,
-      child: GestureDetector(
-        onTap: () => FocusNode().unfocus,
-        child: Scaffold(
-          appBar: AppBar(
-            elevation: 0,
-            surfaceTintColor: Colors.white,
-            backgroundColor: Colors.white,
-            title: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: TextFormField(
-                readOnly: !widget.hasInternet,
-                controller: _controller,
-                focusNode: _focusNode,
-                onFieldSubmitted: (value) {
-                  if (_numberRegExp.hasMatch(value)) {
-                    context.read<ImagesBloc>().add(FetchImagesEvent(size: int.tryParse(value) ?? 0));
+    return GestureDetector(
+      onTap: () => FocusNode().unfocus,
+      child: Scaffold(
+        appBar: AppBar(
+          elevation: 0,
+          surfaceTintColor: Colors.white,
+          backgroundColor: Colors.white,
+          title: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: TextFormField(
+              readOnly: !widget.hasInternet,
+              controller: _controller,
+              focusNode: _focusNode,
+              onFieldSubmitted: (value) {
+                if (_numberRegExp.hasMatch(value)) {
+                  context.read<ImagesBloc>().add(FetchImagesEvent(size: int.tryParse(value) ?? 0));
+                } else {
+                  if (value.isNotEmpty) {
+                    _showBannerNotification(message: 'Invalid Value. Please try again');
                   } else {
-                    if (value.isNotEmpty) {
-                      _showBannerNotification(message: 'Invalid Value. Please try again');
-                    } else {
-                      context.read<ImagesBloc>().add(InitialImagesEvent());
-                    }
+                    context.read<ImagesBloc>().add(InitialImagesEvent());
                   }
-                },
-                cursorColor: Colors.black,
-                enableSuggestions: false,
-                autocorrect: false,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  fillColor: Colors.white,
-                  filled: true,
-                  hintText: 'Enter Page Size',
-                  contentPadding: const EdgeInsets.symmetric(
-                    vertical: 4,
-                    horizontal: 10,
+                }
+              },
+              cursorColor: Colors.black,
+              enableSuggestions: false,
+              autocorrect: false,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                fillColor: Colors.white,
+                filled: true,
+                hintText: 'Enter Page Size',
+                contentPadding: const EdgeInsets.symmetric(
+                  vertical: 4,
+                  horizontal: 10,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(
+                    color: Colors.blueAccent,
                   ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(
-                      color: Colors.blueAccent,
-                    ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(
+                    color: Colors.green,
+                    width: 2,
                   ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(
-                      color: Colors.green,
-                      width: 2,
-                    ),
+                ),
+                border: OutlineInputBorder(
+                  borderSide: const BorderSide(
+                    width: 0.5,
                   ),
-                  border: OutlineInputBorder(
-                    borderSide: const BorderSide(
-                      width: 0.5,
-                    ),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
+                  borderRadius: BorderRadius.circular(10),
                 ),
               ),
             ),
           ),
-          body: DecoratedBox(
-            decoration: const BoxDecoration(
-              color: Colors.white,
-            ),
-            child: RefreshIndicator(
-              onRefresh: () async {
-                _focusNode.unfocus();
-                await Future.delayed(const Duration(seconds: 1));
-                if (mounted) {
-                  context.read<ImagesBloc>().add(FetchImagesEvent());
-                }
-              },
+        ),
+        body: DecoratedBox(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+          ),
+          child: RefreshIndicator(
+            onRefresh: () async {
+              _focusNode.unfocus();
+              await Future.delayed(const Duration(seconds: 1));
+              if (mounted) {
+                context.read<ImagesBloc>().add(FetchImagesEvent());
+              }
+            },
+            child: SafeArea(
+              top: false,
+              bottom: true,
               child: BlocBuilder<ImagesBloc, ImagesState>(
                 builder: (context, state) {
                   if (state.images.isEmpty) {
