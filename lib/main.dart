@@ -31,7 +31,7 @@ class MainApp extends StatelessWidget {
         create: (context) =>
             ImagesBloc(repository: repository, hasInternet: hasInternet)
               ..add(InitialImagesEvent()),
-        child: const HomeScreen(),
+        child: HomeScreen(hasInternet: hasInternet),
       ),
     );
   }

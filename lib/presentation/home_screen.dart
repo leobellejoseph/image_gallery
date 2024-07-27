@@ -7,7 +7,8 @@ import 'package:image_gallery/application/images_bloc.dart';
 import 'package:image_gallery/domain/entity/image_info_object.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final bool hasInternet;
+  const HomeScreen({super.key, required this.hasInternet});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -32,6 +33,7 @@ class _HomeScreenState extends State<HomeScreen> {
         appBar: AppBar(
           backgroundColor: Colors.blue,
           title: TextFormField(
+            readOnly: !widget.hasInternet,
             controller: controller,
             onFieldSubmitted: (value) {
               if (numberRegExp.hasMatch(value)) {
