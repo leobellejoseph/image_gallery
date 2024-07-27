@@ -37,25 +37,19 @@ class _HomeScreenState extends State<HomeScreen> {
             controller: controller,
             onFieldSubmitted: (value) {
               if (numberRegExp.hasMatch(value)) {
-                context
-                    .read<ImagesBloc>()
-                    .add(FetchImagesEvent(size: int.tryParse(value) ?? 0));
+                context.read<ImagesBloc>().add(FetchImagesEvent(size: int.tryParse(value) ?? 0));
               } else {
                 if (value.isNotEmpty) {
                   final banner = MaterialBanner(
-                    content: const Text('Invalid Value. Please try again',
-                        style: TextStyle(color: Colors.red)),
+                    content: const Text('Invalid Value. Please try again', style: TextStyle(color: Colors.red)),
                     actions: [
                       OutlinedButton(
-                          style: OutlinedButton.styleFrom(
-                              side: const BorderSide(color: Colors.blue)),
+                          style: OutlinedButton.styleFrom(side: const BorderSide(color: Colors.blue)),
                           onPressed: () {
-                            ScaffoldMessenger.of(context)
-                                .hideCurrentMaterialBanner();
+                            ScaffoldMessenger.of(context).hideCurrentMaterialBanner();
                             controller.clear();
                           },
-                          child: const Text('Close',
-                              style: TextStyle(color: Colors.blue)))
+                          child: const Text('Close', style: TextStyle(color: Colors.blue)))
                     ],
                   );
                   ScaffoldMessenger.of(context).showMaterialBanner(banner);
@@ -72,7 +66,10 @@ class _HomeScreenState extends State<HomeScreen> {
               fillColor: Colors.white,
               filled: true,
               hintText: 'Enter Page Size',
-              contentPadding: const EdgeInsets.all(4),
+              contentPadding: const EdgeInsets.symmetric(
+                vertical: 4,
+                horizontal: 10,
+              ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
                 borderSide: const BorderSide(
@@ -119,8 +116,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 return ListView.separated(
                   controller: _scrollController,
                   itemCount: list.length,
-                  itemBuilder: (context, index) =>
-                      _itemBuilder(image: list[index], index: index + 1),
+                  itemBuilder: (context, index) => _itemBuilder(image: list[index], index: index + 1),
                   separatorBuilder: (context, index) => _separatorBuilder(),
                 );
               },
@@ -145,8 +141,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   )
                 : CachedNetworkImage(
                     imageUrl: image.downloadUrl,
-                    errorWidget: (context, value, obj) =>
-                        const Image(image: AssetImage('assets/no_image.png')),
+                    errorWidget: (context, value, obj) => const Image(image: AssetImage('assets/no_image.png')),
                     placeholder: (context, value) => const Center(
                       child: CircularProgressIndicator.adaptive(),
                     ),
@@ -172,9 +167,7 @@ class _HomeScreenState extends State<HomeScreen> {
               onPressed: image.isSavedOffline
                   ? null
                   : () {
-                      context
-                          .read<ImagesBloc>()
-                          .add(SaveImagesEvent(image: image));
+                      context.read<ImagesBloc>().add(SaveImagesEvent(image: image));
                     },
               icon: image.isSavedOffline
                   ? const Icon(
