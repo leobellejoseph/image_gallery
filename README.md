@@ -15,3 +15,5 @@ Packages:
 9. ISAR Flutter Libs
 10. HTTP
    
+App Bundle
+https://drive.google.com/file/d/1u_7nkNJ8w-OV8U1QS-vz5zda2AGWbhKl/view?usp=share_link
