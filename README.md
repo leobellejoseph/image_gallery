@@ -5,7 +5,13 @@ References:
 API: https://picsum.photos/v2/list
 Packages:
 1. Flutter Bloc
-2. Hive
+2. Hive/Flutter Hive
 3. Path Provider
-4. Connectivity Plus
+4. Internet Connection Checker Plus
 5. Lottie
+6. Cached Network Image
+7. JSON Serializable
+8. Build Runner
+9. ISAR Flutter Libs
+10. HTTP
+   
